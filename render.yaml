@@ -19,5 +19,5 @@ services:
       - fromGroup: quizr-main
 
 databases:
-  - name:quizr-db
+  - name: quizr-db
     plan: free
