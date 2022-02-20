@@ -7,6 +7,8 @@ import type { AppRouter } from 'server/routers/_app';
 import superjson from 'superjson';
 import getConfig from 'next/config';
 import { getSession, Provider } from 'next-auth/client';
+import 'styles/global.css';
+
 const { publicRuntimeConfig } = getConfig();
 
 const { APP_URL, WS_URL } = publicRuntimeConfig;

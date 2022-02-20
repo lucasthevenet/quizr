@@ -8,10 +8,10 @@ import { createRouter } from '../createRouter';
 import { Context } from '../context';
 import { EventEmitter } from 'events';
 import { Subscription, TRPCError } from '@trpc/server';
-import { Post } from '@prisma/client';
+import { Message } from '@prisma/client';
 
 interface MyEvents {
-  add: (data: Post) => void;
+  add: (data: Message) => void;
   isTypingUpdate: () => void;
 }
 declare interface MyEventEmitter {
@@ -54,7 +54,7 @@ const getNameOrThrow = (ctx: Context) => {
   }
   return name;
 };
-export const postRouter = createRouter()
+export const messageRouter = createRouter()
   // create
   .mutation('add', {
     input: z.object({
@@ -63,17 +63,17 @@ export const postRouter = createRouter()
     }),
     async resolve({ ctx, input }) {
       const name = getNameOrThrow(ctx);
-      const post = await ctx.prisma.post.create({
+      const message = await ctx.prisma.message.create({
         data: {
           ...input,
           name,
           source: 'GITHUB',
         },
       });
-      ee.emit('add', post);
+      ee.emit('add', message);
       delete currentlyTyping[name];
       ee.emit('isTypingUpdate');
-      return post;
+      return message;
     },
   })
   .mutation('isTyping', {
@@ -102,7 +102,7 @@ export const postRouter = createRouter()
       const cursor = input.cursor;
       // `cursor` is of type `Date | undefined`
       // `take` is of type `number | undefined`
-      const page = await ctx.prisma.post.findMany({
+      const page = await ctx.prisma.message.findMany({
         orderBy: {
           createdAt: 'desc',
         },
@@ -129,8 +129,8 @@ export const postRouter = createRouter()
   })
   .subscription('onAdd', {
     resolve() {
-      return new Subscription<Post>((emit) => {
-        const onAdd = (data: Post) => emit.data(data);
+      return new Subscription<Message>((emit) => {
+        const onAdd = (data: Message) => emit.data(data);
         ee.on('add', onAdd);
         return () => {
           ee.off('add', onAdd);

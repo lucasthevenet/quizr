@@ -1,13 +1,13 @@
+import Chat from 'components/chat';
 import { signIn, signOut, useSession } from 'next-auth/client';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { trpc } from '../utils/trpc';
-import 'styles/global.css';
 
 function AddMessageForm() {
-  const addPost = trpc.useMutation('post.add');
+  const addMessage = trpc.useMutation('message.add');
   const utils = trpc.useContext();
   const [session] = useSession();
 
@@ -35,12 +35,12 @@ function AddMessageForm() {
             text: $text.value,
           };
           try {
-            await addPost.mutateAsync(input);
+            await addMessage.mutateAsync(input);
             $text.value = '';
           } catch {}
         }}
       >
-        <fieldset disabled={addPost.isLoading}>
+        <fieldset disabled={addMessage.isLoading}>
           <label htmlFor="name">Your name:</label>
           <br />
           <input id="name" name="name" type="text" disabled value={userName} />
@@ -53,12 +53,12 @@ function AddMessageForm() {
             name="text"
             autoFocus
             onKeyDown={() => {
-              utils.client.mutation('post.isTyping', {
+              utils.client.mutation('message.isTyping', {
                 typing: true,
               });
             }}
             onBlur={() => {
-              utils.client.mutation('post.isTyping', {
+              utils.client.mutation('message.isTyping', {
                 typing: false,
               });
             }}
@@ -66,8 +66,8 @@ function AddMessageForm() {
           <br />
           <input type="submit" />
         </fieldset>
-        {addPost.error && (
-          <p style={{ color: 'red' }}>{addPost.error.message}</p>
+        {addMessage.error && (
+          <p style={{ color: 'red' }}>{addMessage.error.message}</p>
         )}
       </form>
       <p>
@@ -78,24 +78,24 @@ function AddMessageForm() {
 }
 
 export default function IndexPage() {
-  const postsQuery = trpc.useInfiniteQuery(['post.infinite', {}], {
+  const messagesQuery = trpc.useInfiniteQuery(['message.infinite', {}], {
     getPreviousPageParam: (d) => d.prevCursor,
   });
   const utils = trpc.useContext();
   const { hasPreviousPage, isFetchingPreviousPage, fetchPreviousPage } =
-    postsQuery;
+    messagesQuery;
 
   // list of messages that are rendered
   const [messages, setMessages] = useState(() => {
-    const msgs = postsQuery.data?.pages.map((page) => page.items).flat();
+    const msgs = messagesQuery.data?.pages.map((page) => page.items).flat();
     return msgs;
   });
-  type Post = NonNullable<typeof messages>[number];
+  type Message = NonNullable<typeof messages>[number];
 
   // fn to add and dedupe new messages onto state
-  const addMessages = useCallback((incoming?: Post[]) => {
+  const addMessages = useCallback((incoming?: Message[]) => {
     setMessages((current) => {
-      const map: Record<Post['id'], Post> = {};
+      const map: Record<Message['id'], Message> = {};
       for (const msg of current ?? []) {
         map[msg.id] = msg;
       }
@@ -110,12 +110,12 @@ export default function IndexPage() {
 
   // when new data from `useInfiniteQuery`, merge with current state
   useEffect(() => {
-    const msgs = postsQuery.data?.pages.map((page) => page.items).flat();
+    const msgs = messagesQuery.data?.pages.map((page) => page.items).flat();
     addMessages(msgs);
-  }, [postsQuery.data?.pages, addMessages]);
+  }, [messagesQuery.data?.pages, addMessages]);
 
   // subscribe to new posts and add
-  trpc.useSubscription(['post.onAdd'], {
+  trpc.useSubscription(['message.onAdd'], {
     onNext(post) {
       addMessages([post]);
     },
@@ -127,7 +127,7 @@ export default function IndexPage() {
   });
 
   const [currentlyTyping, setCurrentlyTyping] = useState<string[]>([]);
-  trpc.useSubscription(['post.whoIsTyping'], {
+  trpc.useSubscription(['message.whoIsTyping'], {
     onNext(data) {
       setCurrentlyTyping(data);
     },
@@ -160,7 +160,7 @@ export default function IndexPage() {
       </ul>
       <h2>
         Messages
-        {postsQuery.status === 'loading' && '(loading)'}
+        {messagesQuery.status === 'loading' && '(loading)'}
       </h2>
       <button
         data-testid="loadMore"
@@ -198,6 +198,7 @@ export default function IndexPage() {
         </article>
       ))}
       <hr />
+      <Chat />
       <p style={{ fontStyle: 'italic' }}>
         Currently typing:{' '}
         {currentlyTyping.length ? currentlyTyping.join(', ') : 'No one'}

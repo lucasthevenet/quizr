@@ -4,7 +4,7 @@
 import { Subscription } from '@trpc/server';
 import { clearInterval } from 'timers';
 import { createRouter } from '../createRouter';
-import { postRouter } from './post';
+import { messageRouter } from './message';
 import superjson from 'superjson';
 
 /**
@@ -29,7 +29,7 @@ export const appRouter = createRouter()
       return 'yay!';
     },
   })
-  .merge('post.', postRouter)
+  .merge('message.', messageRouter)
   .subscription('randomNumber', {
     resolve() {
       return new Subscription<number>((emit) => {
