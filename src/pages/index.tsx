@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { ReactQueryDevtools } from 'react-query/devtools';
 import { trpc } from '../utils/trpc';
+import 'styles/global.css';
 
 function AddMessageForm() {
   const addPost = trpc.useMutation('post.add');
