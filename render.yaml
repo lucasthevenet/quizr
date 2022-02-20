@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: trpc-websockets
+    name: quizr-web
     env: node
     plan: free
     buildCommand: yarn --prod=false &&
